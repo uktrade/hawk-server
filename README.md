@@ -1,6 +1,6 @@
 # hawk-server [![CircleCI](https://circleci.com/gh/uktrade/hawk-server.svg?style=shield)](https://circleci.com/gh/uktrade/hawk-server) [![Test Coverage](https://api.codeclimate.com/v1/badges/8bc445ea9d471b133b3f/test_coverage)](https://codeclimate.com/github/uktrade/hawk-server/test_coverage)
 
-Utility function to perform the server-side of Hawk authentication. Presents a single-function API, with no dependencies other than the Python standard library.
+Utility function to perform the server-side of Hawk authentication, with no dependencies other than the Python standard library.
 
 
 ## Installation
