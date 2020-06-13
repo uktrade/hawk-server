@@ -28,6 +28,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Check types
+          command: |
+            pip install mypy==0.780
+            mypy hawkserver.py
+      - run:
           name: Install coverage and reporter
           command: |
             pip install coverage==4.5.2
@@ -40,11 +45,6 @@ jobs:
             coverage run -m setup test -v
             coverage xml -i
             ./cc-test-reporter after-build --exit-code $?
-      - run:
-          name: Check types
-          command: |
-            pip install mypy==0.780
-            mypy hawkserver.py
   test-3.8.2: &template
     docker:
       - image: python:3.8.2
