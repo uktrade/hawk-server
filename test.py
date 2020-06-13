@@ -22,11 +22,10 @@ class TestIntegration(unittest.TestCase):
         url = 'http://my-domain:8080/v1/'
         header = hawk_auth_header('not-id', 'my-secret', url, 'GET', 'my-type', b'my-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Unidentified id')
         self.assertEqual(creds, None)
 
@@ -34,11 +33,10 @@ class TestIntegration(unittest.TestCase):
         url = 'http://my-domain:8080/v1/'
         header = hawk_auth_header('my-id', 'not-secret', url, 'GET', 'my-type', b'my-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid mac')
         self.assertEqual(creds, None)
 
@@ -46,11 +44,10 @@ class TestIntegration(unittest.TestCase):
         url = 'http://my-domain:8080/v1/'
         header = hawk_auth_header('my-id', 'my-secret', url, 'GET', 'my-type', b'my-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid mac')
         self.assertEqual(creds, None)
 
@@ -58,11 +55,10 @@ class TestIntegration(unittest.TestCase):
         url = 'http://my-domain:8080/v1/'
         header = hawk_auth_header('my-id', 'my-secret', url, 'POST', 'my-type', b'not-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid hash')
         self.assertEqual(creds, None)
 
@@ -70,11 +66,10 @@ class TestIntegration(unittest.TestCase):
         url = 'http://my-domain:8080/v1/'
         header = hawk_auth_header('my-id', 'my-secret', url, 'POST', 'not-type', b'my-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid hash')
         self.assertEqual(creds, None)
 
@@ -84,11 +79,10 @@ class TestIntegration(unittest.TestCase):
         with freeze_time(past):
             header = hawk_auth_header('my-id', 'my-secret', url, 'POST', 'my-type', b'my-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Stale ts')
         self.assertEqual(creds, None)
 
@@ -107,22 +101,20 @@ class TestIntegration(unittest.TestCase):
             passed_id = _id
             return True
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce_true, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid nonce')
         self.assertEqual(creds, None)
         self.assertEqual(passed_id, 'my-other-id')
         self.assertEqual(passed_nonce, dict(re.findall(r'([a-z]+)="([^"]+)"', header))['nonce'])
 
     def test_invalid_header_format_then_not_authenticated(self):
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             'Hawk d', 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid header')
         self.assertEqual(creds, None)
 
@@ -131,11 +123,10 @@ class TestIntegration(unittest.TestCase):
         header = hawk_auth_header('my-id', 'my-secret', url, 'POST', 'not-type', b'my-content')
 
         bad_auth_header = re.sub(r'ts="[^"]+"', 'ts="non-numeric"', header)
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             bad_auth_header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Invalid ts')
         self.assertEqual(creds, None)
 
@@ -144,11 +135,10 @@ class TestIntegration(unittest.TestCase):
         header = hawk_auth_header('my-id', 'my-secret', url, 'POST', 'not-type', b'my-content')
 
         bad_auth_header = re.sub(r', nonce="[^"]+"', '', header)
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             bad_auth_header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, False)
         self.assertEqual(error, 'Missing nonce')
         self.assertEqual(creds, None)
 
@@ -156,12 +146,11 @@ class TestIntegration(unittest.TestCase):
         url = 'http://my-domain:8080/v1/'
         header = hawk_auth_header('my-id', 'my-secret', url, 'POST', 'my-type', b'my-content')
 
-        is_auth, error, creds = authenticate_hawk_header(
+        error, creds = authenticate_hawk_header(
             lookup_credentials, seen_nonce, 60,
             header, 'POST', 'my-domain', '8080', '/v1/', 'my-type', b'my-content',
         )
-        self.assertEqual(is_auth, True)
-        self.assertEqual(error, '')
+        self.assertEqual(error, None)
         self.assertEqual(creds, {
             'id': 'my-id',
             'key': 'my-secret',
